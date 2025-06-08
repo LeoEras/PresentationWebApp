@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'presApp',  # Your application
+    'login',  # Login application
+    'dashboard', # Main application
 ]
 
 MIDDLEWARE = [
@@ -118,6 +120,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+
+LOGIN_URL = '/login/'  # or wherever your login view is
+
+LOGIN_REDIRECT_URL = '/dashboard/'  # where to go after login
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
