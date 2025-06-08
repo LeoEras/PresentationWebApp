@@ -1,0 +1,9 @@
+<p>Success, you are logged in as 
+{{ user.username }}.
+</p>
+<div>
+    <form action="{% url 'login:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+    </form>
+</div>
