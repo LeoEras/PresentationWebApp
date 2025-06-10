@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+<nav class="navbar navbar-light">
+  <span class="navbar-brand mb-0 h1">Presentation App</span>
+</nav>
+{% block content %}
+{% endblock %}
+<body>
