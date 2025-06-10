@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'presApp',  # Your application
     'login',  # Login application
     'dashboard', # Main application
+    'bootstrap5', # Bootstrap for Django implementation
 ]
 
 MIDDLEWARE = [
