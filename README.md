@@ -23,7 +23,7 @@ To set up the development environment for this project, follow these steps:
     ```
 
 4. **Configure the database:**
-This project works with Postgresql 17, so be sure to [download](https://www.postgresql.org/download/) the requiered files for a complet experience. You might also want to install [PgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) to have a GUI interface to the database.
+This project works with Postgresql 17, so be sure to [download](https://www.postgresql.org/download/) the requiered files for a complete experience. You might also want to install [PgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) to have a GUI interface to the database.
     Edit the database configs on presApp\settings.py file:
     ```py
     DATABASES = {
