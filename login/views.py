@@ -43,4 +43,4 @@ def register_view(request):
 def logout_user(request):
     if request.user.is_authenticated:
         logout(request)
-        return render(request, "login/login.html")
+    return render(request, "login/login.html")
