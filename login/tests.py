@@ -26,13 +26,13 @@ class LoginViewsTests(TestCase):
         self.assertTemplateUsed(response, "login/login.html")
 
     def test_login_valid_credentials(self):
-        """POST request with valid credentials redirects to dashboard"""
+        """POST request with valid credentials redirects to resentation home"""
         response = self.client.post(reverse("login:login_view"), {
             "username": self.test_username,
             "password": self.test_password
         })
         self.assertEqual(response.status_code, 302)  # Redirect
-        self.assertRedirects(response, reverse("dashboard:home"))
+        self.assertRedirects(response, reverse("presentation:home"))
 
     def test_login_invalid_credentials(self):
         """POST request with wrong password stays on login page"""
@@ -45,7 +45,7 @@ class LoginViewsTests(TestCase):
         self.assertContains(response, "Invalid credentials")
 
     def test_register_user_success(self):
-        """Registering a new user redirects to dashboard"""
+        """Registering a new user redirects to presentation home"""
         response = self.client.post(reverse("login:register_view"), {
             "username": "newuser",
             "password": "newpassword",
@@ -55,7 +55,7 @@ class LoginViewsTests(TestCase):
             "last_name": "User"
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse("dashboard:home"))
+        self.assertRedirects(response, reverse("presentation:home"))
 
         # Verify user was created
         self.assertTrue(User.objects.filter(username="newuser").exists())

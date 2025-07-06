@@ -2,8 +2,13 @@ from django.shortcuts import render
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from presentation.models import Presentation
 
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('presentation:home')
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -11,7 +16,7 @@ def login_view(request):
         if user:
             # Successful login
             login(request, user)
-            return redirect('dashboard:home')
+            return redirect('presentation:home')
         else:
             # Failed login
             return render(request, "login/login.html", {"error": "Invalid credentials"})
@@ -36,7 +41,7 @@ def register_view(request):
         # Create a new user
         user = User.objects.create_user(username=username, password=password, email=email, first_name = first_name, last_name = last_name)
         login(request, user)
-        return redirect('dashboard:home')
+        return redirect('presentation:home')
     
     return render(request, "login/register.html")
 
