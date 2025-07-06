@@ -28,5 +28,5 @@ def root_redirect(request):
 urlpatterns = [
     path('', root_redirect),
     path('login/', include('login.urls')),
-    path('dashboard/', include('dashboard.urls')),
+    path('presentation/', include('presentation.urls')),
 ]

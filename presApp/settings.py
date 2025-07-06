@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'presApp',  # Your application
     'login',  # Login application
-    'dashboard', # Main application
+    'presentation', #Main app
     'bootstrap5', # Bootstrap for Django implementation
 ]
 

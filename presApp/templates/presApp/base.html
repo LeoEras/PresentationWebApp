@@ -7,10 +7,23 @@
   {% bootstrap_javascript %}
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
-</head>
-<nav class="navbar navbar-light">
-  <span class="navbar-brand mb-0 h1">Presentation App</span>
-</nav>
+  </head>
+  <nav class="navbar navbar-light">
+    <span class="navbar-brand mb-0 h1">Presentation App</span>
+
+    {% if user.is_authenticated %}
+    <div class="ms-auto d-flex align-items-center">
+      {% if user.first_name != "" %}
+      <span class="navbar-brand mb-0 h1">{{ user.first_name }} {{ user.last_name }}</span>
+      {% else %}
+      <span class="navbar-brand mb-0 h1">{{ user.username }}</span>
+      {% endif %}
+      <a class="btn" style="background-color: #d3d3d3; color: black;" href="{% url 'login:logout_user' %}">
+          Logout
+      </a>
+    </div>
+    {% endif %}
+  </nav>
 {% block content %}
 {% endblock %}
 <body>
