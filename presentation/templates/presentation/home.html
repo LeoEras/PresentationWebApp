@@ -3,4 +3,33 @@
 {% block content %}
 {% load static %}
 
+<div class="container mt-4">
+
+  {% if not has_presentations %}
+    <div class="text-center">
+      <p>Looks like you don't have any presentations analyzed.</p>
+      <a href="{% url 'presentation:upload' %}" class="btn btn-primary">Upload your first PDF</a>
+    </div>
+  {% else %}
+    <h3>Your Recent Presentations</h3>
+    <div class="row">
+      {% for presentation in presentations %}
+        <div class="col-md-4 mb-3">
+          <div class="card">
+            <img src="{{ presentation.thumbnail.url }}" class="card-img-top" alt="Slide preview">
+            <div class="card-body">
+              <h5 class="card-title">{{ presentation.title }}</h5>
+              <p class="card-text">Overall rating: {{ presentation.overall_rating }}</p>
+              <a href="{% url 'presentation:detail' presentation.id %}" class="btn btn-outline-primary">View Analysis</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'presentation:upload' %}" class="btn btn-success">Analyze a New PDF</a>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}
