@@ -6,6 +6,7 @@ class Presentation(models.Model):
     title = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)
     pdf_file = models.FileField(upload_to='presentations/')
+    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
     overall_rating = models.CharField(max_length=50, blank=True, null=True) 
     num_pages = models.PositiveIntegerField(default=0)
     analysis_status = models.CharField(
