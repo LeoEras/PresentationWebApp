@@ -7,4 +7,6 @@ app_name = "presentation"
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('upload/', views.upload, name='upload'),
+    path('presentation/<int:pk>/', views.presentation_detail, name='detail'),
 ]
