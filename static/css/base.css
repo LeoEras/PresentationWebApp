@@ -7,6 +7,10 @@
     color: white !important;
 }
 
+.btn {
+    margin-right: 0.4em;
+}
+
 body, html {
     height: 100%;
     margin: 0;
