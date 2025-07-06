@@ -2,7 +2,7 @@
 {{ user.username }}.
 </p>
 <div>
-    <form action="{% url 'login:logout' %}" method="post">
+    <form action="{% url 'login:logout_user' %}" method="post">
         {% csrf_token %}
         <button type="submit">Log Out</button>
     </form>
