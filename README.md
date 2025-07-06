@@ -49,3 +49,10 @@ This project works with Postgresql 17, so be sure to [download](https://www.post
     ```sh
     localhost:5432:presentationApp:postgres:<my_secure_password>
     ```
+
+## Testing (SQLite quick configuration)
+For testing purposes, just run the following lines (example with the login module and test cases):
+```
+python manage.py test login
+```
+This will create a SQLite instance that sets up a test database for you. It will be destroyed as soon as the test finishes.
