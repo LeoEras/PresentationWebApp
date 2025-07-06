@@ -2,48 +2,61 @@ from django.shortcuts import render
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-from presentation.models import Presentation
+from .forms import LoginForm, RegistrationForm
+from django.contrib import messages
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('presentation:home')
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
-        if user:
-            # Successful login
-            login(request, user)
-            return redirect('presentation:home')
-        else:
-            # Failed login
-            return render(request, "login/login.html", {"error": "Invalid credentials"})
-    return render(request, "login/login.html")
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(request, username=username, password=password)
+            if user:
+                login(request, user)
+                return redirect('presentation:home')
+            else:
+                form.add_error(None, "Invalid username or password.")
+    else:
+        form = LoginForm()
+
+    return render(request, "login/login.html", {"form": form})
+
 
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('presentation:home')
+    
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        repeat_password = request.POST.get("repeat_password")
-        email = request.POST.get("email")
-        first_name = request.POST.get("first_name", "")
-        last_name = request.POST.get("last_name", "")
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            repeat_password = form.cleaned_data["repeat_password"]
+            email = form.cleaned_data["email"]
+            first_name = form.cleaned_data["first_name"]
+            last_name = form.cleaned_data["last_name"]
         
         # Check if the user already exists
         if User.objects.filter(username=username).exists():
-            return render(request, "login/register.html", {"error": "Username already exists"})
+            form.add_error(None, "Username already exists.")
         
         if password != repeat_password:
-            return render(request, "login/register.html", {"error": "Passwords do not match"})
+            form.add_error(None, "Passwords do not match.")
 
         # Create a new user
-        user = User.objects.create_user(username=username, password=password, email=email, first_name = first_name, last_name = last_name)
-        login(request, user)
-        return redirect('presentation:home')
+        if not form.errors:
+            user = User.objects.create_user(username=username, password=password, email=email, first_name = first_name, last_name = last_name)
+            login(request, user)
+            messages.success(request, "Registration successful! Welcome, {}.".format(username))
+            return redirect('presentation:home')
+    else:
+        form = RegistrationForm()
     
-    return render(request, "login/register.html")
+    return render(request, "login/register.html", {"form": form})
 
 def logout_user(request):
     if request.user.is_authenticated:
