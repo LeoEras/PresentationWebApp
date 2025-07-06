@@ -88,5 +88,5 @@ class LoginViewsTests(TestCase):
         """Logout should return to login page"""
         self.client.login(username=self.test_username, password=self.test_password)
         response = self.client.get(reverse("login:logout_user"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "login/login.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("login:login_view"))
