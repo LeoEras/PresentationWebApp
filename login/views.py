@@ -49,7 +49,7 @@ def register_view(request):
 
         # Create a new user
         if not form.errors:
-            user = User.objects.create_user(username=username, password=password, email=email, first_name = first_name, last_name = last_name)
+            user = User.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name)
             login(request, user)
             messages.success(request, "Registration successful! Welcome, {}.".format(username))
             return redirect('presentation:home')
