@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Presentation
+from .models import Presentation, Slide
 from .forms import PresentationUploadForm
-from .utils import file_handler
+from .utils import handle_uploaded_presentation
+from django.contrib import messages
+import os
 
 # Create your views here.
 @login_required
@@ -21,7 +23,27 @@ def upload(request):
         if form.is_valid():
             filename = form.cleaned_data["title"]
             pdf_file = form.cleaned_data["pdf_file"]
-            file_handler(filename, pdf_file, request.user.username)
+            result = handle_uploaded_presentation(filename, pdf_file, request.user.username)
+
+            presentation = form.save(commit=False)
+            presentation.user = request.user
+            presentation.pdf_file = result["pdf_path"]
+            presentation.num_pages = result["num_pages"]
+            presentation.thumbnail = os.path.join(result["images_folder"], result["image_files"][0])
+            presentation.save()
+
+            #print(result["contrast_values"])
+
+            # Saving the slides images
+            for idx, _ in enumerate(result["image_files"], start=1):
+                slide = Slide.objects.create(
+                    presentation=presentation,
+                    page_number=idx,
+                    image_path=os.path.join(result["images_folder"], result["image_files"][idx - 1])
+                )
+                slide.save()
+            
+            messages.success(request, "Presentation uploaded successfully!")
             return redirect("presentation:home")
     else:
         form = PresentationUploadForm()
