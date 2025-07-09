@@ -21,7 +21,7 @@ from django.shortcuts import redirect
 
 def root_redirect(request):
     if request.user.is_authenticated:
-        return redirect('/dashboard/')  # if logged in
+        return redirect('/presentation/')  # if logged in
     else:
         return redirect('/login/')  # if not logged in
 
