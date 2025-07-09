@@ -150,7 +150,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
 
 LOGIN_URL = '/login/'  # or wherever your login view is
 
-LOGIN_REDIRECT_URL = '/dashboard/'  # where to go after login
+LOGIN_REDIRECT_URL = '/presentation/'  # where to go after login
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
