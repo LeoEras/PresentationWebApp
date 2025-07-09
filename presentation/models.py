@@ -25,6 +25,7 @@ class Presentation(models.Model):
 class Slide(models.Model):
     presentation = models.ForeignKey(Presentation, on_delete=models.CASCADE, related_name='slides')
     page_number = models.PositiveIntegerField()
+    image_path = models.CharField(max_length=500, blank=True, null=True)
     text_content = models.TextField(blank=True, null=True)
     font_names = models.TextField(blank=True, null=True)
     avg_font_size = models.FloatField(blank=True, null=True)
