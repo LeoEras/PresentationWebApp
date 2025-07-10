@@ -32,14 +32,13 @@ def upload(request):
             presentation.thumbnail = os.path.join(result["images_folder"], result["image_files"][0])
             presentation.save()
 
-            #print(result["contrast_values"])
-
             # Saving the slides images
-            for idx, _ in enumerate(result["image_files"], start=1):
+            for idx, image_file in enumerate(result["image_files"], start=1):
                 slide = Slide.objects.create(
                     presentation=presentation,
                     page_number=idx,
-                    image_path=os.path.join(result["images_folder"], result["image_files"][idx - 1])
+                    image_path=os.path.join(result["images_folder"], image_file),
+                    contrast_score=result["contrast_values"][idx - 1]
                 )
                 slide.save()
             

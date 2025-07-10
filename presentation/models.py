@@ -26,13 +26,10 @@ class Slide(models.Model):
     presentation = models.ForeignKey(Presentation, on_delete=models.CASCADE, related_name='slides')
     page_number = models.PositiveIntegerField()
     image_path = models.CharField(max_length=500, blank=True, null=True)
-    text_content = models.TextField(blank=True, null=True)
-    font_names = models.TextField(blank=True, null=True)
-    avg_font_size = models.FloatField(blank=True, null=True)
-    num_words = models.PositiveIntegerField(default=0)
-    dominant_bg_color = models.CharField(max_length=20, blank=True, null=True)
-    dominant_text_color = models.CharField(max_length=20, blank=True, null=True)
-    contrast_ratio = models.FloatField(blank=True, null=True)
+    words_score = models.FloatField(default=0)
+    fonts_score = models.FloatField(default=0)
+    contrast_score = models.FloatField(default=0)
+    font_size_score = models.FloatField(default=0)
 
     def __str__(self):
         return f"Slide {self.page_number} of {self.presentation.title}"

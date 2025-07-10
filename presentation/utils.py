@@ -205,7 +205,6 @@ def handle_uploaded_presentation(filename, pdf_file, username):
     full_pdf_path = os.path.join(settings.MEDIA_ROOT, rel_pdf_path)
     pages_data = extract_text_boxes(full_pdf_path)
     contrasts = calculate_contrast(pages_data, images_folder, filename)
-    print(contrasts)
 
     return {
         "pdf_path": rel_pdf_path,
