@@ -38,7 +38,8 @@ def upload(request):
                     presentation=presentation,
                     page_number=idx,
                     image_path=os.path.join(result["images_folder"], image_file),
-                    contrast_score=result["contrast_values"][idx - 1]
+                    contrast_score=result["contrast_scores"][idx - 1],
+                    words_score=result["num_words_scores"][idx - 1],
                 )
                 slide.save()
             

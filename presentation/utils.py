@@ -66,7 +66,7 @@ def extract_text_boxes(pdf_path):
                             continue
 
                         text_boxes_per_page.append({
-                            "text": span["text"],
+                            "text": span["text"].strip(),
                             "bbox": span["bbox"],
                             "font_size": span["size"],
                             "color": span["color"],
@@ -122,8 +122,36 @@ def contrast_to_stars(contrast_ratio, font_size_pt, is_bold=False):
 
     return stars
 
+def calculate_num_words(pages_data):
+    num_words_scores = []
+    for data in pages_data:
+
+        if len(data["text_boxes"]) == 0:
+            num_words_scores.append(5)
+            continue
+        
+        num_word_per_page = 0
+        for t_box in data["text_boxes"]:
+            num_word_per_page = num_word_per_page + len(t_box["text"].split(" "))
+        
+        num_words_scores.append(words_to_stars(num_word_per_page))
+    return num_words_scores
+
+def words_to_stars(num_words):
+    if num_words <= 25:
+        stars = 5
+    elif num_words <= 40:
+        stars = 4
+    elif num_words <= 60:
+        stars = 3
+    elif num_words <= 80:
+        stars = 2
+    else:
+        stars = 1
+    return stars
+
 def calculate_contrast(pages_data, images_folder, filename):
-    contrasts = []
+    contrasts_scores = []
 
     for data in pages_data:
         page = data["page"]
@@ -134,7 +162,7 @@ def calculate_contrast(pages_data, images_folder, filename):
         contrasts_per_page = []
 
         if len(data["text_boxes"]) == 0:
-            contrasts.append(0)
+            contrasts_scores.append(5)
             continue
         
         for t_box in data["text_boxes"]:
@@ -195,8 +223,8 @@ def calculate_contrast(pages_data, images_folder, filename):
             darker = min(lum_text, lum_bg)
             contrast_ratio = (lighter + 0.05) / (darker + 0.05)
             contrasts_per_page.append(contrast_to_stars(contrast_ratio, font_size, bold))
-        contrasts.append(np.average(contrasts_per_page).item())
-    return contrasts
+        contrasts_scores.append(np.average(contrasts_per_page).item())
+    return contrasts_scores
 
 def handle_uploaded_presentation(filename, pdf_file, username):
     base_folder, rel_pdf_path = save_pdf(filename, pdf_file, username)
@@ -204,12 +232,14 @@ def handle_uploaded_presentation(filename, pdf_file, username):
 
     full_pdf_path = os.path.join(settings.MEDIA_ROOT, rel_pdf_path)
     pages_data = extract_text_boxes(full_pdf_path)
-    contrasts = calculate_contrast(pages_data, images_folder, filename)
+    contrasts_scores = calculate_contrast(pages_data, images_folder, filename)
+    num_words_scores = calculate_num_words(pages_data)
 
     return {
         "pdf_path": rel_pdf_path,
         "images_folder": images_folder,
         "image_files": image_files,
         "num_pages": num_pages,
-        "contrast_values": contrasts,
+        "contrast_scores": contrasts_scores,
+        "num_words_scores": num_words_scores,
     }
