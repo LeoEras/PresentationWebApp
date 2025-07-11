@@ -1,0 +1,47 @@
+{% extends 'presApp/base.html' %}
+
+{% block content %}
+{% load static %}
+{% load star_tags %}
+{% get_media_prefix as media_url %}
+
+<link rel="stylesheet" href="{% static 'css/presentation.css' %}">
+<script type="text/javascript" src="{% static 'js/presentation.js' %}"></script>
+
+<div class="container mt-4">
+  <div class="row">
+    <!-- LEFT: Focused slide -->
+    <div class="col-md-9 text-center">
+      <img id="focused-slide-img"
+           src="{{ media_url }}{{ focused.image_path }}"
+           class="img-fluid focused-image mb-3"
+           alt="Focused Slide">
+
+      <h4 class="mt-3">{{ presentation.title }}</h4>
+
+      <div class="slide-scores mt-2">
+        <p><strong>Overall rating:</strong> {% render_stars presentation.overall_rating %}</p>
+        <p><strong>Review:</strong> {{ total_slides }}</p>
+        <p><strong>Slide Contrast:</strong> <span id="slide-contrast">{{ focused.contrast_ratio }}</span></p>
+        <p><strong>Words in Slide:</strong> <span id="slide-words">{{ focused.num_words }}</span></p>
+      </div>
+
+      <a href="{% url 'presentation:home' %}" class="btn btn-secondary mt-3">Back</a>
+    </div>
+
+    <!-- RIGHT: Vertical thumbnails -->
+    <div class="col-md-3">
+      <div class="thumbnail-scroll-container">
+        {% for slide in slides %}
+          <img
+            src="{{ media_url }}{{ slide.image_path }}"
+            class="thumbnail-image img-thumbnail mb-2"
+            alt="Slide {{ slide.page_number }}"
+            data-slide-src="{{ media_url }}{{ slide.image_path }}">
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
