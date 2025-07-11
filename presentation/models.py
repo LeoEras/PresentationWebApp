@@ -27,9 +27,9 @@ class Slide(models.Model):
     page_number = models.PositiveIntegerField()
     image_path = models.CharField(max_length=500, blank=True, null=True)
     words_score = models.FloatField(default=0)
-    fonts_score = models.FloatField(default=0)
     contrast_score = models.FloatField(default=0)
     font_size_score = models.FloatField(default=0)
+    overall_rating = models.FloatField(default=0)
 
     def __str__(self):
         return f"Slide {self.page_number} of {self.presentation.title}"
