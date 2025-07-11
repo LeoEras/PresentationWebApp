@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load static %}
+{% load star_tags %}
 
 <div class="container mt-4">
 
@@ -19,7 +20,10 @@
             <img src="{{ presentation.thumbnail.url }}" class="card-img-top" alt="Slide preview">
             <div class="card-body">
               <h5 class="card-title">{{ presentation.title }}</h5>
-              <p class="card-text">Overall rating: {{ presentation.overall_rating }}</p>
+              <p class="card-text">
+                Overall rating:
+                {% render_stars presentation.overall_rating %}
+              </p>
               <a href="{% url 'presentation:detail' presentation.id %}" class="btn btn-outline-primary">View Analysis</a>
             </div>
           </div>
