@@ -4,6 +4,29 @@ from django.conf import settings
 import cv2
 import numpy as np
 
+WORD_COUNT_RUBRIC = {
+    5: 25,
+    4: 40,
+    3: 60,
+    2: 80
+}
+
+CONTRAST_THRESHOLDS = {
+    5: 20,
+    4: 18,
+    3: 14,
+    2: 8,
+    1: 5
+}
+
+SIZES_THRESHOLDS = {
+    5: 24,
+    4: 16,
+    3: 14,
+    2: 12,
+    1: 10
+}
+
 def save_pdf(filename, pdf_file, username):
     output_folder = os.path.join(settings.MEDIA_ROOT, "uploads/" + username + "/" + filename + "/")
     pdf_path = os.path.join(output_folder, filename + ".pdf")
@@ -70,7 +93,7 @@ def extract_text_boxes(pdf_path):
                             "bbox": span["bbox"],
                             "font_size": span["size"],
                             "color": span["color"],
-                            "font": span["font"],
+                            "font": span["font"], # This is used for the contrast, but otherwise not as important
                         })
 
         page_data = {
@@ -99,15 +122,15 @@ def int_to_rgb(color_int):
     return (r, g, b)
 
 def contrast_to_stars(contrast_ratio, font_size_pt, is_bold=False):
-    if contrast_ratio < 5:
+    if contrast_ratio < CONTRAST_THRESHOLDS[1]:
         stars = 1
-    elif contrast_ratio < 8:
+    elif contrast_ratio < CONTRAST_THRESHOLDS[2]:
         stars = 2
-    elif contrast_ratio < 14:
+    elif contrast_ratio < CONTRAST_THRESHOLDS[3]:
         stars = 3
-    elif contrast_ratio < 18:
+    elif contrast_ratio < CONTRAST_THRESHOLDS[4]:
         stars = 4
-    elif contrast_ratio <= 20:
+    elif contrast_ratio <= CONTRAST_THRESHOLDS[5]:
         stars = 5
     else:
         stars = 5  # Just in case
@@ -127,7 +150,7 @@ def calculate_num_words(pages_data):
     for data in pages_data:
 
         if len(data["text_boxes"]) == 0:
-            num_words_scores.append(5)
+            num_words_scores.append(0)
             continue
         
         num_word_per_page = 0
@@ -138,13 +161,13 @@ def calculate_num_words(pages_data):
     return num_words_scores
 
 def words_to_stars(num_words):
-    if num_words <= 25:
+    if num_words <= WORD_COUNT_RUBRIC[5]:
         stars = 5
-    elif num_words <= 40:
+    elif num_words <= WORD_COUNT_RUBRIC[4]:
         stars = 4
-    elif num_words <= 60:
+    elif num_words <= WORD_COUNT_RUBRIC[3]:
         stars = 3
-    elif num_words <= 80:
+    elif num_words <= WORD_COUNT_RUBRIC[2]:
         stars = 2
     else:
         stars = 1
@@ -223,17 +246,106 @@ def calculate_contrast(pages_data, images_folder, filename):
             darker = min(lum_text, lum_bg)
             contrast_ratio = (lighter + 0.05) / (darker + 0.05)
             contrasts_per_page.append(contrast_to_stars(contrast_ratio, font_size, bold))
-        contrasts_scores.append(np.average(contrasts_per_page).item())
+        
+        average = np.average(contrasts_per_page).item()
+        contrasts_scores.append(average)
     return contrasts_scores
 
-def feedback_from_words_score(score):
-    return ""
-def feedback_from_contrast_score(score):
-    return ""
-def feedback_from_fonts_score(score):
-    return ""
-def feedback_from_fonts_size_score(score):
-    return ""
+def font_size_to_stars(font_size):
+    if font_size >= SIZES_THRESHOLDS[5]:
+        stars = 5
+    elif font_size >= SIZES_THRESHOLDS[4]:
+        stars = 4
+    elif font_size >= SIZES_THRESHOLDS[3]:
+        stars = 3
+    elif font_size >= SIZES_THRESHOLDS[2]:
+        stars = 2
+    else:
+        stars = 1
+    
+    return stars
+
+def calculate_font_size(pages_data):
+    font_size_scores = []
+    for data in pages_data:
+
+        if len(data["text_boxes"]) == 0:
+            font_size_scores.append(0)
+            continue
+        
+        font_size_per_page = []
+        for t_box in data["text_boxes"]:
+            font_size_per_page.append(int(t_box["font_size"]))
+
+        average = np.min(font_size_per_page).item()
+        font_size_scores.append(font_size_to_stars(average))
+
+    return font_size_scores
+
+def feedback_from_words_score(stars_score):
+    standard_guideline = (
+        " This distracts the audience from listening to your explanation "
+        "and focuses their attention on reading the slides instead, which is not ideal. "
+        "Try sticking to the 6x6 rule (6 ideas of 6 words max each)."
+    )
+    if stars_score >= 4.5:
+        feedback = f"This slide has a proper amount of words (under {WORD_COUNT_RUBRIC[5]}). Great job keeping it concise!"
+    elif stars_score >= 3.5:
+        feedback = f"This slide has a few more words than ideal (under {WORD_COUNT_RUBRIC[4]}).{standard_guideline}"
+    elif stars_score >= 2.5:
+        feedback = f"This slide is quite wordy (under {WORD_COUNT_RUBRIC[3]}).{standard_guideline}"
+    elif stars_score >= 1.5:
+        feedback = f"This slide has a lot of text (under {WORD_COUNT_RUBRIC[2]}).{standard_guideline}"
+    elif stars_score >= 0.5:
+        feedback = f"This slide has far too many words (more than {WORD_COUNT_RUBRIC[2]}).{standard_guideline}"
+    else:
+        feedback = "The analyzer could not find words on this slide — perhaps it contains only images?"
+
+    return feedback
+
+def feedback_from_contrast_score(stars_score):
+    standard_guideline = (
+        " Either change the background or the text color chosen to increase the contrast score."
+    )
+    
+    if stars_score >= 4.5:
+        feedback = "The words on this slide show great contrast, which helps your audience see the words clearly. Great job!"
+    elif stars_score >= 3.5:
+        feedback = "While not the ideal contrast, most of the words in this slide can be seen by the public. Good job!"
+    elif stars_score >= 2.5:
+        feedback = f"Some of the words in this slide cannot be seen clearly, making it harder for the audience to read.{standard_guideline}"
+    elif stars_score >= 1.5:
+        feedback = f"Most of the words in this slide cannot be clearly seen, which decreases your chance of connecting with your audience.{standard_guideline}"
+    elif stars_score >= 0.5:
+        feedback = f"The text contents of this slide are very difficult to see.{standard_guideline}"
+    else:
+        feedback = "The analyzer could not find valuable information on text contrasts on this slide — perhaps it contains only images?"
+
+    return feedback
+
+
+# def feedback_from_fonts_score(stars_score):
+#     return ""
+    
+def feedback_from_fonts_size_score(stars_score):
+    standard_guideline = (
+        f" Try to increase the text size in your slides. Try to keep it over {SIZES_THRESHOLDS[5]} pt."
+    )
+    
+    if stars_score >= 4.5:
+        feedback = f"The text size seems appropriate for your presentation — the minimum size detected is over {SIZES_THRESHOLDS[5]} pt, which is easily visible. Great job!"
+    elif stars_score >= 3.5:
+        feedback = "While not the ideal text size, it is still visible for your audience. Good job!"
+    elif stars_score >= 2.5:
+        feedback = f"Some text in your slide is slightly over {SIZES_THRESHOLDS[3]} pt, which requires more effort to read.{standard_guideline}"
+    elif stars_score >= 1.5:
+        feedback = f"Some text in your slide is slightly over {SIZES_THRESHOLDS[2]} pt. This size can be difficult for your audience to read.{standard_guideline}"
+    elif stars_score >= 0.5:
+        feedback = f"The text on your slide is very difficult to see and read due to small font size.{standard_guideline}"
+    else:
+        feedback = "The analyzer could not find any text size data for this slide — perhaps it contains only images?"
+
+    return feedback
 
 def handle_uploaded_presentation(filename, pdf_file, username):
     base_folder, rel_pdf_path = save_pdf(filename, pdf_file, username)
@@ -243,6 +355,7 @@ def handle_uploaded_presentation(filename, pdf_file, username):
     pages_data = extract_text_boxes(full_pdf_path)
     contrasts_scores = calculate_contrast(pages_data, images_folder, filename)
     num_words_scores = calculate_num_words(pages_data)
+    font_size_score = calculate_font_size(pages_data)
 
     return {
         "pdf_path": rel_pdf_path,
@@ -251,4 +364,5 @@ def handle_uploaded_presentation(filename, pdf_file, username):
         "num_pages": num_pages,
         "contrast_scores": contrasts_scores,
         "num_words_scores": num_words_scores,
+        "font_size_score": font_size_score,
     }
