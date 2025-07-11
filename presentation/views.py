@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Presentation, Slide
 from .forms import PresentationUploadForm
-from .utils import handle_uploaded_presentation
+from .utils import handle_uploaded_presentation, feedback_from_words_score, feedback_from_contrast_score, feedback_from_fonts_size_score
 from django.contrib import messages
+import numpy as np
 import os
 
 # Create your views here.
@@ -15,6 +16,15 @@ def home(request):
         "presentations": presentations,
         "has_presentations": has_presentations,
     })
+
+def calculate_score(slides):
+    score_arr = []
+    for slide in slides:
+        score_arr.append(slide.overall_rating)
+
+    average = round(np.average(score_arr).item(), 1)
+    print(average)
+    return average
 
 @login_required
 def upload(request):
@@ -40,8 +50,14 @@ def upload(request):
                     image_path=os.path.join(result["images_folder"], image_file),
                     contrast_score=result["contrast_scores"][idx - 1],
                     words_score=result["num_words_scores"][idx - 1],
+                    font_size_score=result["font_size_score"][idx - 1],
                 )
+                slide.overall_rating = round(np.average([slide.contrast_score, slide.words_score, slide.font_size_score]).item(), 1)
                 slide.save()
+            
+            slides = Slide.objects.filter(presentation=presentation)
+            presentation.overall_rating = calculate_score(slides)
+            presentation.save()
             
             messages.success(request, "Presentation uploaded successfully!")
             return redirect("presentation:home")
@@ -49,6 +65,32 @@ def upload(request):
         form = PresentationUploadForm()
     return render(request, "presentation/upload.html", {"form": form})
 
+
+def build_feedback(slides):
+    feedback_slide = []
+    feedback = ""
+    for slide in slides:
+        feedback = feedback + feedback_from_contrast_score(slide.contrast_score) + "\n"
+        feedback = feedback + feedback_from_words_score(slide.words_score) + "\n"
+        feedback = feedback + feedback_from_fonts_size_score(slide.font_size_score) + "\n"
+        feedback_slide.append(feedback)
+    return feedback_slide
+
 @login_required
-def presentation_detail(request):
-    pass
+def presentation_detail(request, pk):
+    presentation = Presentation.objects.get(id=pk)
+    slides = Slide.objects.filter(presentation=presentation)
+    focused = slides[0]
+    total = slides.count()
+    feedback = build_feedback(slides)
+
+    # for item in feedback:
+    #     print(item)
+
+    return render(request, "presentation/presentation.html", {
+        "presentation": presentation,
+        "focused": focused,
+        "slides": slides,
+        "total_slides": total,
+        "feedback": feedback,
+    })
