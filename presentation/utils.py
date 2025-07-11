@@ -226,6 +226,15 @@ def calculate_contrast(pages_data, images_folder, filename):
         contrasts_scores.append(np.average(contrasts_per_page).item())
     return contrasts_scores
 
+def feedback_from_words_score(score):
+    return ""
+def feedback_from_contrast_score(score):
+    return ""
+def feedback_from_fonts_score(score):
+    return ""
+def feedback_from_fonts_size_score(score):
+    return ""
+
 def handle_uploaded_presentation(filename, pdf_file, username):
     base_folder, rel_pdf_path = save_pdf(filename, pdf_file, username)
     images_folder, image_files, num_pages = pdf_to_images(rel_pdf_path, base_folder, filename)
