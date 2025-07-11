@@ -1,0 +1,45 @@
+.focused-image {
+    max-height: 75vh;
+    width: auto;
+    border: 2px solid #333;
+    border-radius: 5px;
+}
+
+.thumbnail-image {
+    height: 100px;
+    width: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumbnail-image:hover {
+    transform: scale(1.1);
+    border: 2px solid #007bff;
+}
+
+.slide-scores p {
+    margin-bottom: 0.5em;
+}
+
+.thumbnail-scroll-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 190px;        /* reduce horizontal space */
+    padding-right: 5px;
+}
+
+.thumbnail-image {
+    height: 100px;
+    width: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumbnail-image:hover {
+    transform: scale(1.1);
+    border: 2px solid #007bff;
+}
+
+.slide-scores{
+    text-align: left;
+}
