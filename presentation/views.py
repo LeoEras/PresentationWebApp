@@ -23,7 +23,6 @@ def calculate_score(slides):
         score_arr.append(slide.overall_rating)
 
     average = round(np.average(score_arr).item(), 1)
-    print(average)
     return average
 
 @login_required
@@ -68,8 +67,8 @@ def upload(request):
 
 def build_feedback(slides):
     feedback_slide = []
-    feedback = ""
     for slide in slides:
+        feedback = ""
         feedback = feedback + feedback_from_contrast_score(slide.contrast_score) + "\n"
         feedback = feedback + feedback_from_words_score(slide.words_score) + "\n"
         feedback = feedback + feedback_from_fonts_size_score(slide.font_size_score) + "\n"
@@ -84,13 +83,22 @@ def presentation_detail(request, pk):
     total = slides.count()
     feedback = build_feedback(slides)
 
-    # for item in feedback:
-    #     print(item)
+    slides_arr = []
+    for i in range(0, len(slides)):
+        slide_dict = {}
+        slide_dict["image_path"] = slides[i].image_path
+        slide_dict["contrast_score"] = round(slides[i].contrast_score, 1)
+        slide_dict["words_score"] = round(slides[i].words_score, 1)
+        slide_dict["font_size_score"] = round(slides[i].font_size_score, 1)
+        slide_dict["page_number"] = slides[i].page_number
+        slide_dict["feedback"] = feedback[i]
+
+        slides_arr.append(slide_dict)
 
     return render(request, "presentation/presentation.html", {
         "presentation": presentation,
         "focused": focused,
-        "slides": slides,
+        "slides": slides_arr,
         "total_slides": total,
         "feedback": feedback,
     })
