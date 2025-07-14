@@ -21,9 +21,10 @@
 
       <div class="slide-scores mt-2">
         <p><strong>Overall rating:</strong> {% render_stars presentation.overall_rating %}</p>
-        <p><strong>Review:</strong> {{ total_slides }}</p>
-        <p><strong>Slide Contrast:</strong> <span id="slide-contrast">{{ focused.contrast_ratio }}</span></p>
-        <p><strong>Words in Slide:</strong> <span id="slide-words">{{ focused.num_words }}</span></p>
+        <p><strong>Contrast Score:</strong> <span id="slide-contrast">{{ focused.contrast_score }}</span></p>
+        <p><strong>Number of Words Score:</strong> <span id="slide-words">{{ focused.words_score }}</span></p>
+        <p><strong>Font Sizes:</strong> <span id="slide-font-sizes">{{ focused.font_size_score }}</span></p>
+        <p><strong>Feedback:</strong> <span id="slide-feedback-words">{{ feedback.0 }}</span></p>
       </div>
 
       <a href="{% url 'presentation:home' %}" class="btn btn-secondary mt-3">Back</a>
@@ -37,7 +38,12 @@
             src="{{ media_url }}{{ slide.image_path }}"
             class="thumbnail-image img-thumbnail mb-2"
             alt="Slide {{ slide.page_number }}"
-            data-slide-src="{{ media_url }}{{ slide.image_path }}">
+            data-slide-src="{{ media_url }}{{ slide.image_path }}"
+            data-contrast="{{ slide.contrast_score }}"
+            data-words="{{ slide.words_score }}"
+            data-font-size="{{ slide.font_size_score }}"
+            data-feedback="{{ slide.feedback }}"
+          >
         {% endfor %}
       </div>
     </div>
