@@ -12,11 +12,11 @@ WORD_COUNT_RUBRIC = {
 }
 
 CONTRAST_THRESHOLDS = {
-    5: 20,
-    4: 18,
-    3: 14,
-    2: 8,
-    1: 5
+    5: 12,
+    4: 10,
+    3: 8,
+    2: 5,
+    1: 3
 }
 
 SIZES_THRESHOLDS = {
@@ -173,6 +173,21 @@ def words_to_stars(num_words):
         stars = 1
     return stars
 
+def luminance(rgb):
+    def channel_luminance(channel):
+        v = channel / 255.0
+        if v <= 0.04045:
+            return v / 12.92
+        else:
+            return ((v + 0.055) / 1.055) ** 2.4
+
+    R, G, B = rgb
+    R_lin = channel_luminance(R)
+    G_lin = channel_luminance(G)
+    B_lin = channel_luminance(B)
+
+    return 0.2126 * R_lin + 0.7152 * G_lin + 0.0722 * B_lin
+
 def calculate_contrast(pages_data, images_folder, filename):
     contrasts_scores = []
 
@@ -185,7 +200,7 @@ def calculate_contrast(pages_data, images_folder, filename):
         contrasts_per_page = []
 
         if len(data["text_boxes"]) == 0:
-            contrasts_scores.append(5)
+            contrasts_scores.append(0)
             continue
         
         for t_box in data["text_boxes"]:
@@ -209,6 +224,12 @@ def calculate_contrast(pages_data, images_folder, filename):
 
             # Crop the background region including padding
             bg_region = img[y0_bg:y1_bg, x0_bg:x1_bg].copy()
+            
+            '''
+            # Manual testing to main folder. 
+            # DO NOT UNCOMMENT UNLESS YOU DONT CARE ABOUT HAVING A LOT OF IMAGES ON THE MAIN FOLDER
+            '''
+            # cv2.imwrite(f"page_{page}_{x0_px}_{y0_px}.jpg", bg_region)
 
             # Mask out the text box itself from the background region (set to zero)
             text_x0_in_bg = x0_px - x0_bg
@@ -231,11 +252,6 @@ def calculate_contrast(pages_data, images_folder, filename):
 
             # Convert background color from BGR (OpenCV default) to RGB
             bg_color_rgb = bg_color_bgr[::-1]
-
-            # Luminance function based on sRGB luminance formula
-            def luminance(rgb):
-                R, G, B = [v / 255.0 for v in rgb]
-                return 0.2126 * R + 0.7152 * G + 0.0722 * B
 
             # Compute luminance values for text and background
             lum_text = luminance(text_color_rgb)
