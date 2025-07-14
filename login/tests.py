@@ -42,7 +42,7 @@ class LoginViewsTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "login/login.html")
-        self.assertContains(response, "Invalid credentials")
+        self.assertContains(response, "Invalid username or password")
 
     def test_register_user_success(self):
         """Registering a new user redirects to presentation home"""
