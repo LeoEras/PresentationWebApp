@@ -11,7 +11,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   </head>
   <nav class="navbar navbar-light">
-    <span class="navbar-brand mb-0 h1">Presentation App</span>
+    <a href="{% url 'presentation:home' %}" class="navbar-brand mb-0 h1">
+      Presentation App
+    </a>
 
     {% if user.is_authenticated %}
     <div class="ms-auto d-flex align-items-center">
