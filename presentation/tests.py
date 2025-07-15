@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .utils import contrast_to_stars, luminance, extract_text_boxes
+from .utils import contrast_to_stars, luminance, extract_text_boxes, calculate_num_words, words_to_stars
 import fitz
 import os
 import shutil
@@ -165,18 +165,34 @@ class UtilsExtractTextBoxes(TestCase):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
 
-class UtilsPdfToImgTest(TestCase):
+class UtilsCalculateNumWords(TestCase):
     def setUp(self):
-        self.single_page_file = "/test_pdf/single_page.pdf"
-        self.multiple_page_file = "/test_pdf/multiple_page.pdf"
+        self.five_start_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas auctor libero et justo blandit, eget accumsan magna molestie. In eu lectus nec lectus luctus."
+        self.four_start_text = self.five_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed pulvinar commodo mattis."
+        self.three_start_text = self.four_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum est magna, semper a faucibus at, pretium in magna."
+        self.two_start_text = self.three_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis massa nisi, fermentum maximus arcu sed, venenatis tempus mauris."
+        self.one_start_text = self.two_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis massa nisi, fermentum maximus arcu sed, venenatis tempus mauris."
+        self.pages_data = [{'page': 1, 'text_boxes': [{'text': self.five_start_text}]}, {'page': 2, 'text_boxes': [{'text': self.one_start_text}]}, {'page': 3, 'text_boxes': [{'text': self.two_start_text}]}]
 
-    def test_pdf_image_single_page_pdf(self):
-        """Calculate the score on the Contrast.pdf test pdf"""
-        pass
+    def test_get_number_of_words(self):
+        """ Calculate the number of words from a text box object """
+        words = calculate_num_words(self.pages_data)
+        self.assertEqual(words[0], 5)
+        self.assertEqual(words[1], 1)
+        self.assertEqual(words[2], 2)
 
-    def test_pdf_image_multiple_page_pdf(self):
-        """Calculate the score on the Contrast.pdf test pdf"""
-        pass
+    def test_star_number_text(self):
+        """ Testing for the number of stars based on the text number of words """
+        stars = words_to_stars(len(self.five_start_text.split(" ")))
+        self.assertEqual(stars, 5)
+        stars = words_to_stars(len(self.four_start_text.split(" ")))
+        self.assertEqual(stars, 4)
+        stars = words_to_stars(len(self.three_start_text.split(" ")))
+        self.assertEqual(stars, 3)
+        stars = words_to_stars(len(self.two_start_text.split(" ")))
+        self.assertEqual(stars, 2)
+        stars = words_to_stars(len(self.one_start_text.split(" ")))
+        self.assertEqual(stars, 1)   
 
 class UtilsContrastTests(TestCase):
     def setUp(self):
