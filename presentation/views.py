@@ -60,6 +60,8 @@ def upload(request):
             
             messages.success(request, "Presentation uploaded successfully!")
             return redirect("presentation:home")
+        else:
+            return render(request, "presentation/upload.html", {"form": form})
     else:
         form = PresentationUploadForm()
     return render(request, "presentation/upload.html", {"form": form})

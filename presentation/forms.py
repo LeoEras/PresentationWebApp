@@ -16,8 +16,8 @@ class PresentationUploadForm(forms.ModelForm):
             raise forms.ValidationError("The file is empty.")
         if not file.name.lower().endswith('.pdf'):
             raise forms.ValidationError("Only PDF files are allowed.")
-        if file.size > 10 * 1024 * 1024:
-            raise forms.ValidationError("The file is too large (max 10MB).")
+        if file.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("The file is too large (max 5 MB).")
         try:
             pdf = PdfReader(file)
             if len(pdf.pages) == 0:

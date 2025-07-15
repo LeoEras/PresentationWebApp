@@ -40,7 +40,7 @@ def save_pdf(filename, pdf_file, username):
     relative_output_folder = os.path.relpath(output_folder, settings.MEDIA_ROOT)
     return relative_output_folder, relative_pdf_path
 
-def pdf_to_images(relative_pdf_path, base_folder, filename, dpi=150):
+def pdf_to_images(relative_pdf_path, base_folder, filename):
     output_folder = os.path.join(settings.MEDIA_ROOT, base_folder, "images")
     os.makedirs(output_folder, exist_ok=True)
     pdf_real_path = os.path.join(settings.MEDIA_ROOT, relative_pdf_path)
@@ -121,7 +121,7 @@ def int_to_rgb(color_int):
     b = color_int & 255
     return (r, g, b)
 
-def contrast_to_stars(contrast_ratio, font_size_pt, is_bold=False):
+def contrast_to_stars(contrast_ratio):
     if contrast_ratio < CONTRAST_THRESHOLDS[1]:
         stars = 1
     elif contrast_ratio < CONTRAST_THRESHOLDS[2]:
@@ -135,13 +135,13 @@ def contrast_to_stars(contrast_ratio, font_size_pt, is_bold=False):
     else:
         stars = 5  # Just in case
 
-    # Half star bonus for large text
-    if (font_size_pt >= 18) or (is_bold and font_size_pt >= 14):
-        stars += 0.5
+    # # Half star bonus for large text
+    # if (font_size_pt >= 18) or (is_bold and font_size_pt >= 14):
+    #     stars += 0.5
 
-    # Cap at 5 stars
-    if stars > 5:
-        stars = 5
+    # # Cap at 5 stars
+    # if stars > 5:
+    #     stars = 5
 
     return stars
 
@@ -205,9 +205,9 @@ def calculate_contrast(pages_data, images_folder, filename):
         
         for t_box in data["text_boxes"]:
             x0_px, y0_px, x1_px, y1_px = map(int, t_box["bbox"])
-            font_size = t_box["font_size"]
-            font_name = t_box["font"]
-            bold = is_bold_font(font_name)
+            # font_size = t_box["font_size"]
+            # font_name = t_box["font"]
+            # bold = is_bold_font(font_name)
 
             # Text color extracted from PDF metadata, convert to RGB tuple
             text_color_rgb = int_to_rgb(t_box["color"])
@@ -261,7 +261,7 @@ def calculate_contrast(pages_data, images_folder, filename):
             lighter = max(lum_text, lum_bg)
             darker = min(lum_text, lum_bg)
             contrast_ratio = (lighter + 0.05) / (darker + 0.05)
-            contrasts_per_page.append(contrast_to_stars(contrast_ratio, font_size, bold))
+            contrasts_per_page.append(contrast_to_stars(contrast_ratio))
         
         average = np.average(contrasts_per_page).item()
         contrasts_scores.append(average)
