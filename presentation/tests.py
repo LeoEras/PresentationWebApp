@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .utils import calculate_contrast, contrast_to_stars, luminance, pdf_to_images, save_pdf
+from .utils import contrast_to_stars, luminance
 import fitz
 import os
 import shutil
@@ -12,12 +12,14 @@ class PresentationViewsTests(TestCase):
     def setUp(self):
         pass
 
+# This is a system test
 class UtilsSavePDFTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='Test_User', password='secret')
         self.client = Client()
         self.client.login(username='Test_User', password='secret')
         self.test_pdf_location = 'test_pdf/single_page.pdf'
+        self.test_pdf_for_image_test_case = 'test_pdf/multiple_page.pdf'
         self.invalid_pdf_location = 'test_pdf/image_as_pdf.pdf'
         self.zero_sized_pdf_location = 'test_pdf/empty_file.pdf'
         self.too_large_pdf_location = 'test_pdf/too_large.pdf'
@@ -41,6 +43,26 @@ class UtilsSavePDFTest(TestCase):
             'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
         )
         self.assertTrue(os.path.exists(saved_path)) # This means the PDF was saved there
+
+    def test_images_obtained_from_successful_pdf_upload(self):
+        ''' Images folder test '''
+        with open(self.test_pdf_for_image_test_case, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+        
+        saved_path = os.path.join(
+            'media', 'uploads', 'Test_User', self.filename
+        )
+        self.assertTrue(os.path.exists(saved_path)) # The images folder is created
+        _, _, files = next(os.walk(saved_path + "/images"))
+        file_count = len(files)
+        self.assertEqual(file_count, 7)
+
+        for item in range(0, len(files)):
+            self.assertEqual(files[item].split(".")[1], "png") # Testing the extension
 
     def test_invalid_pdf_upload_attempt(self):
         ''' In this case, an image, pretending being a PDF file, is uploaded '''
@@ -109,7 +131,7 @@ class UtilsSavePDFTest(TestCase):
 class UtilsPdfToImgTest(TestCase):
     def setUp(self):
         self.single_page_file = "/test_pdf/single_page.pdf"
-        self.multiple_page_file = "/test_pdf/single_page.pdf"
+        self.multiple_page_file = "/test_pdf/multiple_page.pdf"
 
     def test_pdf_image_single_page_pdf(self):
         """Calculate the score on the Contrast.pdf test pdf"""
@@ -124,6 +146,7 @@ class UtilsContrastTests(TestCase):
         self.bg_white = (255,255,255)
 
     def test_black_text_white_bg(self):
+        """ Calculate the contrast score between a black text against a white background """
         text = (0,0,0)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -133,6 +156,7 @@ class UtilsContrastTests(TestCase):
         self.assertEqual(stars, 5)
 
     def test_high_text_contrast(self):
+        """ Contrast that yield 5 stars, this mean its over 12 """
         text = (134,0,45)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -143,6 +167,7 @@ class UtilsContrastTests(TestCase):
         self.assertEqual(stars, 5)
 
     def test_good_text_contrast(self):
+        """ Contrast that yield 4 stars, this mean its between 8 and 10 """
         text = (21,89,92)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -153,6 +178,7 @@ class UtilsContrastTests(TestCase):
         self.assertEqual(stars, 4)
 
     def test_moderate_text_contrast(self):
+        """ Contrast that yield 3 stars, this mean its between 5 and 8 """
         text = (63,124,30)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -163,6 +189,7 @@ class UtilsContrastTests(TestCase):
         self.assertEqual(stars, 3)
 
     def test_low_contrast(self):
+        """ Contrast that yield 2 stars, this mean its between 3 and 5 """
         text = (168,135,111)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -173,6 +200,7 @@ class UtilsContrastTests(TestCase):
         self.assertEqual(stars, 2)
     
     def test_lowest_contrast(self):
+        """ Contrast that yield 1 star, this mean its less than 3"""
         text = (219,238,255)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -180,6 +208,7 @@ class UtilsContrastTests(TestCase):
         self.assertLess(contrast_ratio, 2)
         stars = contrast_to_stars(contrast_ratio)
         self.assertEqual(stars, 1)
+
 
 
 class UtilsLuminanceTests(TestCase):

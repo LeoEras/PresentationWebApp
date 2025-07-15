@@ -122,15 +122,15 @@ def int_to_rgb(color_int):
     return (r, g, b)
 
 def contrast_to_stars(contrast_ratio):
-    if contrast_ratio < CONTRAST_THRESHOLDS[1]:
+    if contrast_ratio <= CONTRAST_THRESHOLDS[1]:
         stars = 1
-    elif contrast_ratio < CONTRAST_THRESHOLDS[2]:
+    elif contrast_ratio <= CONTRAST_THRESHOLDS[2]:
         stars = 2
-    elif contrast_ratio < CONTRAST_THRESHOLDS[3]:
+    elif contrast_ratio <= CONTRAST_THRESHOLDS[3]:
         stars = 3
-    elif contrast_ratio < CONTRAST_THRESHOLDS[4]:
+    elif contrast_ratio <= CONTRAST_THRESHOLDS[4] and contrast_ratio < CONTRAST_THRESHOLDS[5]:
         stars = 4
-    elif contrast_ratio <= CONTRAST_THRESHOLDS[5]:
+    elif contrast_ratio >= CONTRAST_THRESHOLDS[5]:
         stars = 5
     else:
         stars = 5  # Just in case
