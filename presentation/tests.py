@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .utils import contrast_to_stars, luminance
+from .utils import contrast_to_stars, luminance, extract_text_boxes
 import fitz
 import os
 import shutil
@@ -124,6 +124,43 @@ class UtilsSavePDFTest(TestCase):
         # No file is saved
         self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
 
+    def tearDown(self):
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
+
+class UtilsExtractTextBoxes(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='Test_User', password='secret')
+        self.client = Client()
+        self.client.login(username='Test_User', password='secret')
+        self.test_pdf_location = 'test_pdf/single_page.pdf'
+        self.upload_folder = os.path.join('media', 'uploads', 'Test_User')
+        self.filename = "Test Text Extraction"
+
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
+
+    def test_pdf_extract_words(self):
+        ''' Word extraction is performed here '''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+    
+        saved_path = os.path.join(
+            'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
+        )
+
+        # This document has exactly one page
+        text_boxes = extract_text_boxes(saved_path)
+        self.assertEqual(len(text_boxes), 1) # Testing for 1 page
+        self.assertEqual(text_boxes[0]["page"], 1) # Testing if the data is consistent
+
+        self.assertEqual(text_boxes[0]["text_boxes"][0]["text"], "07/15/2025") # First text found
+        self.assertEqual(text_boxes[0]["text_boxes"][1]["text"], "Contrast test case") # Second text found
+    
     def tearDown(self):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
