@@ -1,8 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .utils import contrast_to_stars, luminance, extract_text_boxes, calculate_num_words, words_to_stars, calculate_font_size, calculate_contrast
-import fitz
+from .utils import contrast_to_stars, luminance, extract_text_boxes, score_num_words, words_to_stars, score_font_size, score_contrast
 import os
 import shutil
 from .models import Presentation
@@ -176,34 +175,58 @@ class UtilsExtractTextBoxes(TestCase):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
 
-class UtilsCalculateNumWords(TestCase):
+class UtilsNumWordsTests(TestCase):
     def setUp(self):
         self.five_start_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas auctor libero et justo blandit, eget accumsan magna molestie. In eu lectus nec lectus luctus."
         self.four_start_text = self.five_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed pulvinar commodo mattis."
         self.three_start_text = self.four_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum est magna, semper a faucibus at, pretium in magna."
         self.two_start_text = self.three_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis massa nisi, fermentum maximus arcu sed, venenatis tempus mauris."
         self.one_start_text = self.two_start_text + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis massa nisi, fermentum maximus arcu sed, venenatis tempus mauris."
-        self.pages_data = [{'page': 1, 'text_boxes': [{'text': self.five_start_text}]}, {'page': 2, 'text_boxes': [{'text': self.one_start_text}]}, {'page': 3, 'text_boxes': [{'text': self.two_start_text}]}]
+        self.pages_data = [{'page': 1, 'text_boxes': [{'text': self.five_start_text}]}, 
+                           {'page': 2, 'text_boxes': [{'text': self.one_start_text}]}, 
+                           {'page': 3, 'text_boxes': [{'text': self.two_start_text}]},
+                           {"page": 4, "text_boxes": [{"text": "Hello world"}]},
+                           {"page": 5, "text_boxes": [{"text": "This is"}, {"text": "a very verbose test slide with lots of words spread across several boxes"}]},
+                           {"page": 6, "text_boxes": []}] # No text on this slide, an image for instance
+        
 
     def test_get_number_of_words(self):
-        """ Calculate the number of words from a text box object """
-        words = calculate_num_words(self.pages_data)
-        self.assertEqual(words[0], 5)
-        self.assertEqual(words[1], 1)
-        self.assertEqual(words[2], 2)
+        """ Calculate the number of words from a text box object 
+            For example:
+            # 5 stars → ≤ 25 words
+            # 4 stars → ≤ 40 words
+            # 3 stars → ≤ 60 words
+            # 2 stars → ≤ 80 words
+            # 1 star  → > 80 words
+        """
+        words = score_num_words(self.pages_data)
+        self.assertListEqual(words, [5, 1, 2, 5, 5, 0])
 
     def test_star_number_text(self):
         """ Testing for the number of stars based on the text number of words """
+        self.assertEqual(len(self.five_start_text.split(" ")), 24)
         stars = words_to_stars(len(self.five_start_text.split(" ")))
         self.assertEqual(stars, 5)
+
+        self.assertEqual(len(self.four_start_text.split(" ")), 35)
         stars = words_to_stars(len(self.four_start_text.split(" ")))
         self.assertEqual(stars, 4)
+
+        self.assertEqual(len(self.three_start_text.split(" ")), 52)
         stars = words_to_stars(len(self.three_start_text.split(" ")))
         self.assertEqual(stars, 3)
+
+        self.assertEqual(len(self.two_start_text.split(" ")), 69)
         stars = words_to_stars(len(self.two_start_text.split(" ")))
         self.assertEqual(stars, 2)
+
+        self.assertEqual(len(self.one_start_text.split(" ")), 86)
         stars = words_to_stars(len(self.one_start_text.split(" ")))
-        self.assertEqual(stars, 1)   
+        self.assertEqual(stars, 1)
+
+    def test_empty_pages_data(self):
+        words = score_num_words([]) # No data detected at all
+        self.assertEqual(words, [])
 
 class UtilsContrastTests(TestCase):
     def setUp(self):
@@ -299,7 +322,7 @@ class UtilsContrastTests(TestCase):
             'uploads', 'Test_User', self.filename, 'images'
         )
         text_boxes = extract_text_boxes(saved_path)
-        contrast_scores = calculate_contrast(text_boxes, image_folders, self.filename)
+        contrast_scores = score_contrast(text_boxes, image_folders, self.filename)
         
         # This is intentional, as these scores are averaged between the different word extracts
         self.assertEquals(contrast_scores, [2.0, 4.0, 3.2, 3.5, 3.1, 2.4, 1.8])
@@ -334,7 +357,7 @@ class UtilsFontSizesTest(TestCase):
             'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
         )
         text_boxes = extract_text_boxes(saved_path)
-        font_sizes = calculate_font_size(text_boxes)
+        font_sizes = score_font_size(text_boxes)
 
         self.assertEquals(font_sizes, [5, 5, 4, 3, 2, 1])
 

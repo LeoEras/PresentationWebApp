@@ -145,7 +145,7 @@ def contrast_to_stars(contrast_ratio):
 
     return stars
 
-def calculate_num_words(pages_data):
+def score_num_words(pages_data):
     num_words_scores = []
     for data in pages_data:
 
@@ -188,7 +188,7 @@ def luminance(rgb):
 
     return 0.2126 * R_lin + 0.7152 * G_lin + 0.0722 * B_lin
 
-def calculate_contrast(pages_data, images_folder, filename):
+def score_contrast(pages_data, images_folder, filename):
     contrasts_scores = []
 
     for data in pages_data:
@@ -288,7 +288,7 @@ def font_size_to_stars(font_size):
     
     return stars
 
-def calculate_font_size(pages_data):
+def score_font_size(pages_data):
     font_size_scores = []
     for data in pages_data:
 
@@ -376,9 +376,9 @@ def handle_uploaded_presentation(filename, pdf_file, username):
 
     full_pdf_path = os.path.join(settings.MEDIA_ROOT, rel_pdf_path)
     pages_data = extract_text_boxes(full_pdf_path)
-    contrasts_scores = calculate_contrast(pages_data, images_folder, filename)
-    num_words_scores = calculate_num_words(pages_data)
-    font_size_score = calculate_font_size(pages_data)
+    contrasts_scores = score_contrast(pages_data, images_folder, filename)
+    num_words_scores = score_num_words(pages_data)
+    font_size_score = score_font_size(pages_data)
 
     return {
         "pdf_path": rel_pdf_path,
