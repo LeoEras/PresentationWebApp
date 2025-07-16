@@ -3,6 +3,7 @@ import fitz
 from django.conf import settings
 import cv2
 import numpy as np
+import math
 
 WORD_COUNT_RUBRIC = {
     5: 25,
@@ -21,10 +22,9 @@ CONTRAST_THRESHOLDS = {
 
 SIZES_THRESHOLDS = {
     5: 24,
-    4: 16,
+    4: 18,
     3: 14,
-    2: 12,
-    1: 10
+    2: 12
 }
 
 def save_pdf(filename, pdf_file, username):
@@ -128,9 +128,9 @@ def contrast_to_stars(contrast_ratio):
         stars = 2
     elif contrast_ratio <= CONTRAST_THRESHOLDS[3]:
         stars = 3
-    elif contrast_ratio <= CONTRAST_THRESHOLDS[4] and contrast_ratio < CONTRAST_THRESHOLDS[5]:
+    elif contrast_ratio <= CONTRAST_THRESHOLDS[5]:
         stars = 4
-    elif contrast_ratio >= CONTRAST_THRESHOLDS[5]:
+    elif contrast_ratio > CONTRAST_THRESHOLDS[5]:
         stars = 5
     else:
         stars = 5  # Just in case
@@ -263,11 +263,18 @@ def calculate_contrast(pages_data, images_folder, filename):
             contrast_ratio = (lighter + 0.05) / (darker + 0.05)
             contrasts_per_page.append(contrast_to_stars(contrast_ratio))
         
-        average = np.average(contrasts_per_page).item()
+        average = round(np.average(contrasts_per_page).item(), 1)
         contrasts_scores.append(average)
     return contrasts_scores
 
 def font_size_to_stars(font_size):
+    '''
+    SIZES_THRESHOLDS = {
+    5: 24,
+    4: 18,
+    3: 14,
+    2: 12
+    }'''
     if font_size >= SIZES_THRESHOLDS[5]:
         stars = 5
     elif font_size >= SIZES_THRESHOLDS[4]:
@@ -291,10 +298,10 @@ def calculate_font_size(pages_data):
         
         font_size_per_page = []
         for t_box in data["text_boxes"]:
-            font_size_per_page.append(int(t_box["font_size"]))
+            font_size_per_page.append(math.ceil(t_box["font_size"]))
 
-        average = np.min(font_size_per_page).item()
-        font_size_scores.append(font_size_to_stars(average))
+        minimum = np.min(font_size_per_page).item()
+        font_size_scores.append(font_size_to_stars(minimum))
 
     return font_size_scores
 

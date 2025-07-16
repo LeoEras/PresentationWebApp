@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .utils import contrast_to_stars, luminance, extract_text_boxes, calculate_num_words, words_to_stars
+from .utils import contrast_to_stars, luminance, extract_text_boxes, calculate_num_words, words_to_stars, calculate_font_size, calculate_contrast
 import fitz
 import os
 import shutil
@@ -12,7 +12,18 @@ class PresentationViewsTests(TestCase):
     def setUp(self):
         pass
 
-# This is a system test
+'''
+    This is a system test:
+    Testing - User registration
+            - User login
+            - User uploads PDF
+                - Valid PDF
+                - Invalid PDF (not PDF file)
+                - Invalid PDF (File not found / invalid location)
+                - Invalid PDF (0 byte size)
+                - Invalid PDF (> 5 MB size)
+                - Invalid PDF (another file extension tested)
+'''
 class UtilsSavePDFTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='Test_User', password='secret')
@@ -110,7 +121,7 @@ class UtilsSavePDFTest(TestCase):
         self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
 
     def test_other_file_upload_attempt(self):
-        ''' In this case, a 5.5 MB PDF file is uploaded. Limit is 5 MB '''
+        ''' In this case, something else is uploaded. The system does not allow other than PDF files '''
         with open(self.some_other_file_location, 'rb') as pdf_file:
             response = self.client.post(
                 reverse('presentation:upload'), 
@@ -196,7 +207,16 @@ class UtilsCalculateNumWords(TestCase):
 
 class UtilsContrastTests(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='Test_User', password='secret')
+        self.client = Client()
+        self.client.login(username='Test_User', password='secret')
+        self.test_pdf_location = 'test_pdf/contrast.pdf'
+        self.filename = "Test Example"
+        self.upload_folder = os.path.join('media', 'uploads', 'Test_User')
         self.bg_white = (255,255,255)
+
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
 
     def test_black_text_white_bg(self):
         """ Calculate the contrast score between a black text against a white background """
@@ -210,17 +230,17 @@ class UtilsContrastTests(TestCase):
 
     def test_high_text_contrast(self):
         """ Contrast that yield 5 stars, this mean its over 12 """
-        text = (134,0,45)
+        text = (91,0,45)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
         contrast_ratio = (max(lum_text, lum_bg) + 0.05) / (min(lum_text, lum_bg) + 0.05)
-        self.assertGreater(contrast_ratio, 10)
-        self.assertLess(contrast_ratio, 11)
+        self.assertGreater(contrast_ratio, 14)
+        self.assertLess(contrast_ratio, 15)
         stars = contrast_to_stars(contrast_ratio)
         self.assertEqual(stars, 5)
 
     def test_good_text_contrast(self):
-        """ Contrast that yield 4 stars, this mean its between 8 and 10 """
+        """ Contrast that yield 4 stars, this mean its between 8 and 12 """
         text = (21,89,92)
         lum_text = luminance(text)
         lum_bg = luminance(self.bg_white)
@@ -262,6 +282,65 @@ class UtilsContrastTests(TestCase):
         stars = contrast_to_stars(contrast_ratio)
         self.assertEqual(stars, 1)
 
+    # This is an integration test, from the moment a PDF is uploaded to obtaining the grades.
+    def test_contrast_calculation_system_test(self):
+        ''' Contrast calculation test, using the file font_sizes.pdf '''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+        
+        saved_path = os.path.join(
+            'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
+        )
+        image_folders = os.path.join(
+            'uploads', 'Test_User', self.filename, 'images'
+        )
+        text_boxes = extract_text_boxes(saved_path)
+        contrast_scores = calculate_contrast(text_boxes, image_folders, self.filename)
+        
+        # This is intentional, as these scores are averaged between the different word extracts
+        self.assertEquals(contrast_scores, [2.0, 4.0, 3.2, 3.5, 3.1, 2.4, 1.8])
+    
+    def tearDown(self):
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
+
+
+class UtilsFontSizesTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='Test_User', password='secret')
+        self.client = Client()
+        self.client.login(username='Test_User', password='secret')
+        self.test_pdf_location = 'test_pdf/font_sizes.pdf'
+        self.filename = "Test Example"
+        self.upload_folder = os.path.join('media', 'uploads', 'Test_User')
+
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
+
+    def test_font_size_calculation_system_test(self):
+        ''' Font sizes test, using the file font_sizes.pdf '''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+        
+        saved_path = os.path.join(
+            'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
+        )
+        text_boxes = extract_text_boxes(saved_path)
+        font_sizes = calculate_font_size(text_boxes)
+
+        self.assertEquals(font_sizes, [5, 5, 4, 3, 2, 1])
+
+    def tearDown(self):
+        if os.path.exists(self.upload_folder):
+            shutil.rmtree(self.upload_folder)
 
 
 class UtilsLuminanceTests(TestCase):
