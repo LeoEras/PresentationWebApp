@@ -325,7 +325,7 @@ class UtilsContrastTests(TestCase):
         contrast_scores = score_contrast(text_boxes, image_folders, self.filename)
         
         # This is intentional, as these scores are averaged between the different word extracts
-        self.assertEquals(contrast_scores, [2.0, 4.0, 3.2, 3.5, 3.1, 2.4, 1.8])
+        self.assertListEqual(contrast_scores, [2.0, 4.0, 3.2, 3.5, 3.1, 2.4, 1.8])
     
     def tearDown(self):
         if os.path.exists(self.upload_folder):
@@ -359,7 +359,7 @@ class UtilsFontSizesTest(TestCase):
         text_boxes = extract_text_boxes(saved_path)
         font_sizes = score_font_size(text_boxes)
 
-        self.assertEquals(font_sizes, [5, 5, 4, 3, 2, 1])
+        self.assertListEqual(font_sizes, [5, 5, 4, 3, 2, 1])
 
     def tearDown(self):
         if os.path.exists(self.upload_folder):
