@@ -1,0 +1,15 @@
+asgiref==3.8.1
+backports.zoneinfo==0.2.1
+beautifulsoup4==4.13.4
+Django==4.2.23
+django-bootstrap==0.2.4
+django-bootstrap-v5==1.0.11
+django-bootstrap5==24.3
+numpy==1.24.4
+opencv-python==4.12.0.88
+pillow==10.4.0
+PyMuPDF==1.24.11
+pypdf==5.8.0
+soupsieve==2.7
+sqlparse==0.5.3
+typing_extensions==4.13.2
