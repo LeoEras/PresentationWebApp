@@ -1,5 +1,4 @@
 __pycache__
 *migrations/
-__init__*
 db.sqlite3
 media/*
