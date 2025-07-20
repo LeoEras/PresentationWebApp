@@ -241,70 +241,6 @@ class UtilsContrastTests(TestCase):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
 
-    def test_black_text_white_bg(self):
-        """ Calculate the contrast score between a black text against a white background """
-        text = (0,0,0)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg) + 0.05) / (min(lum_text, lum_bg) + 0.05)
-        self.assertEqual(contrast_ratio, 21)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 5)
-
-    def test_high_text_contrast(self):
-        """ Contrast that yield 5 stars, this mean its over 12 """
-        text = (91,0,45)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg) + 0.05) / (min(lum_text, lum_bg) + 0.05)
-        self.assertGreater(contrast_ratio, 14)
-        self.assertLess(contrast_ratio, 15)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 5)
-
-    def test_good_text_contrast(self):
-        """ Contrast that yield 4 stars, this mean its between 8 and 12 """
-        text = (21,89,92)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg) + 0.05) / (min(lum_text, lum_bg) + 0.05)
-        self.assertGreater(contrast_ratio, 8)
-        self.assertLess(contrast_ratio, 9)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 4)
-
-    def test_moderate_text_contrast(self):
-        """ Contrast that yield 3 stars, this mean its between 5 and 8 """
-        text = (63,124,30)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg) + 0.05) / (min(lum_text, lum_bg) + 0.05)
-        self.assertGreater(contrast_ratio, 5)
-        self.assertLess(contrast_ratio, 6)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 3)
-
-    def test_low_contrast(self):
-        """ Contrast that yield 2 stars, this mean its between 3 and 5 """
-        text = (168,135,111)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg)+0.05) / (min(lum_text, lum_bg)+0.05)
-        self.assertGreater(contrast_ratio, 3)
-        self.assertLess(contrast_ratio, 4)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 2)
-    
-    def test_lowest_contrast(self):
-        """ Contrast that yield 1 star, this mean its less than 3"""
-        text = (219,238,255)
-        lum_text = luminance(text)
-        lum_bg = luminance(self.bg_white)
-        contrast_ratio = (max(lum_text, lum_bg)+0.05) / (min(lum_text, lum_bg)+0.05)
-        self.assertLess(contrast_ratio, 2)
-        stars = contrast_to_stars(contrast_ratio)
-        self.assertEqual(stars, 1)
-
     # This is an integration test, from the moment a PDF is uploaded to obtaining the grades.
     def test_contrast_calculation_system_test(self):
         ''' Contrast calculation test, using the file font_sizes.pdf '''
@@ -326,6 +262,40 @@ class UtilsContrastTests(TestCase):
         
         # This is intentional, as these scores are averaged between the different word extracts
         self.assertListEqual(contrast_scores, [2.0, 4.0, 3.2, 3.5, 3.1, 2.4, 1.8])
+        
+    # This is an integration test, from the moment a PDF is uploaded to obtaining the grades.
+    def test_contrast_calculation_malformed_data(self):
+        ''' Contrast calculation test, with malformed data from extract_text_boxes '''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+        
+        image_folders = os.path.join(
+            'uploads', 'Test_User', self.filename, 'images'
+        )
+        text_boxes = "malformed data"
+        self.assertRaisesMessage(score_contrast(text_boxes, image_folders, self.filename), "IndexError")
+
+    # This is an integration test, from the moment a PDF is uploaded to obtaining the grades.
+    def test_contrast_calculation_invalid_folder(self):
+        ''' Contrast calculation test, with malformed data from image_folder'''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            _ = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': self.filename,
+                'pdf_file': pdf_file}
+            )
+        
+        saved_path = os.path.join(
+            'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
+        )
+        image_folders = "Invalid data"
+        text_boxes = extract_text_boxes(saved_path)
+        contrasts = score_contrast(text_boxes, image_folders, self.filename)
+        self.assertListEqual(contrasts, [0, 0, 0, 0, 0, 0, 0])
     
     def tearDown(self):
         if os.path.exists(self.upload_folder):

@@ -4,6 +4,7 @@ from django.conf import settings
 import cv2
 import numpy as np
 import math
+import glob
 
 WORD_COUNT_RUBRIC = {
     5: 25,
@@ -192,11 +193,19 @@ def score_contrast(pages_data, images_folder, filename):
     contrasts_scores = []
 
     for data in pages_data:
-        page = data["page"]
-        image_filename = f"{filename}_{page }.png"
+        try:
+            page = data["page"]
+        except TypeError:
+            return 0
+        image_filename = f"{filename}_{page}.png"
         image_full_path = os.path.join(settings.MEDIA_ROOT, images_folder, image_filename)
         
         img = cv2.imread(image_full_path)
+
+        if img is None:
+            contrasts_scores.append(0)
+            continue
+
         contrasts_per_page = []
 
         if len(data["text_boxes"]) == 0:
