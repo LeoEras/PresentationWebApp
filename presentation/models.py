@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Presentation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='presentations')
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=80)
     upload_date = models.DateTimeField(auto_now_add=True)
     pdf_file = models.FileField(upload_to='presentations/')
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)

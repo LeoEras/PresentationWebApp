@@ -34,7 +34,7 @@ class UtilsSavePDFTest(TestCase):
         self.zero_sized_pdf_location = 'test_pdf/empty_file.pdf'
         self.too_large_pdf_location = 'test_pdf/too_large.pdf'
         self.some_other_file_location = 'test_pdf/something_else.doc'
-        self.filename = "Test Example"
+        self.title_filename = "Test Example"
         self.upload_folder = os.path.join('media', 'uploads', 'Test_User')
 
         if os.path.exists(self.upload_folder):
@@ -45,26 +45,78 @@ class UtilsSavePDFTest(TestCase):
         with open(self.test_pdf_location, 'rb') as pdf_file:
             _ = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
         
         saved_path = os.path.join(
-            'media', 'uploads', 'Test_User', self.filename, self.filename + '.pdf'
+            'media', 'uploads', 'Test_User', self.title_filename, self.title_filename + '.pdf'
         )
         self.assertTrue(os.path.exists(saved_path)) # This means the PDF was saved there
+
+    def test_pdf_upload_invalid_filename(self):
+        test_filename_invalid_name = "/root/directory@@@"
+        test_filename_too_small = "small"
+        test_filename_too_long = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas auctor libero et justo blandit."
+        test_filename_empty_name = ""
+        test_filename_empty_strings = "               "
+        ''' Normal PDF file is uploaded '''
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            response = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': test_filename_invalid_name,
+                'pdf_file': pdf_file}
+            )
+        
+        self.assertFormError(response, 'form', 'title', errors=['Title must contain only letters, numbers, spaces, and - _ . , ( )'])
+
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            response = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': test_filename_too_small,
+                'pdf_file': pdf_file}
+            )
+            
+        self.assertFormError(response, 'form', 'title', errors=['Ensure this value has at least 10 characters (it has 5).'])
+
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            response = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': test_filename_too_long,
+                'pdf_file': pdf_file}
+            )
+            
+        self.assertFormError(response, 'form', 'title', 'Ensure this value has at most 80 characters (it has 97).')
+
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            response = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': test_filename_empty_name,
+                'pdf_file': pdf_file}
+            )
+            
+        self.assertFormError(response, 'form', 'title', 'This field is required.')
+
+        with open(self.test_pdf_location, 'rb') as pdf_file:
+            response = self.client.post(
+                reverse('presentation:upload'), 
+                {'title': test_filename_empty_strings,
+                'pdf_file': pdf_file}
+            )
+            
+        self.assertFormError(response, 'form', 'title', 'This field is required.')
 
     def test_images_obtained_from_successful_pdf_upload(self):
         ''' Images folder test '''
         with open(self.test_pdf_for_image_test_case, 'rb') as pdf_file:
             _ = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
         
         saved_path = os.path.join(
-            'media', 'uploads', 'Test_User', self.filename
+            'media', 'uploads', 'Test_User', self.title_filename
         )
         self.assertTrue(os.path.exists(saved_path)) # The images folder is created
         _, _, files = next(os.walk(saved_path + "/images"))
@@ -79,22 +131,22 @@ class UtilsSavePDFTest(TestCase):
         with open(self.invalid_pdf_location, 'rb') as pdf_file:
             response = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
         
         self.assertEqual(response.status_code, 200)  # It stays on the same page
-        self.assertFormError(response, 'form', 'pdf_file', "The uploaded file is not a valid PDF.")
+        self.assertFormError(response, 'form', 'pdf_file', errors=["The uploaded file is not a valid PDF."])
 
         # No file is saved
-        self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
+        self.assertFalse(Presentation.objects.filter(title=self.title_filename).exists())
 
     def test_zero_size_pdf_upload_attempt(self):
         ''' In this case, a 0 size PDF file is uploaded '''
         with open(self.zero_sized_pdf_location, 'rb') as pdf_file:
             response = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
         
@@ -102,14 +154,14 @@ class UtilsSavePDFTest(TestCase):
         self.assertFormError(response, 'form', 'pdf_file', "The submitted file is empty.")
 
         # No file is saved
-        self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
+        self.assertFalse(Presentation.objects.filter(title=self.title_filename).exists())
 
     def test_too_large_pdf_upload_attempt(self):
         ''' In this case, a 5.5 MB PDF file is uploaded. Limit is 5 MB '''
         with open(self.too_large_pdf_location, 'rb') as pdf_file:
             response = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
         
@@ -117,22 +169,21 @@ class UtilsSavePDFTest(TestCase):
         self.assertFormError(response, 'form', 'pdf_file', "The file is too large (max 5 MB).")
 
         # No file is saved
-        self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
+        self.assertFalse(Presentation.objects.filter(title=self.title_filename).exists())
 
     def test_other_file_upload_attempt(self):
         ''' In this case, something else is uploaded. The system does not allow other than PDF files '''
         with open(self.some_other_file_location, 'rb') as pdf_file:
             response = self.client.post(
                 reverse('presentation:upload'), 
-                {'title': self.filename,
+                {'title': self.title_filename,
                 'pdf_file': pdf_file}
             )
-        
         self.assertEqual(response.status_code, 200)  # It stays on the same page
-        self.assertFormError(response, 'form', 'pdf_file', "Only PDF files are allowed.")
+        self.assertFormError(response, 'form', 'pdf_file', errors=["File is not recognized as a PDF."])
 
         # No file is saved
-        self.assertFalse(Presentation.objects.filter(title=self.filename).exists())
+        self.assertFalse(Presentation.objects.filter(title=self.title_filename).exists())
 
     def tearDown(self):
         if os.path.exists(self.upload_folder):
