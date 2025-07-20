@@ -22,6 +22,10 @@ class PresentationViewsTests(TestCase):
                 - Invalid PDF (0 byte size)
                 - Invalid PDF (> 5 MB size)
                 - Invalid PDF (another file extension tested)
+            - Correct title for PDF
+                - Valid text length (10 - 80 chars)
+                - Valid text (no special symbols)
+                - Valid text (no string of spaces)
 '''
 class UtilsSavePDFTest(TestCase):
     def setUp(self):
@@ -54,57 +58,39 @@ class UtilsSavePDFTest(TestCase):
         )
         self.assertTrue(os.path.exists(saved_path)) # This means the PDF was saved there
 
-    def test_pdf_upload_invalid_filename(self):
-        test_filename_invalid_name = "/root/directory@@@"
-        test_filename_too_small = "small"
-        test_filename_too_long = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas auctor libero et justo blandit."
-        test_filename_empty_name = ""
-        test_filename_empty_strings = "               "
-        ''' Normal PDF file is uploaded '''
-        with open(self.test_pdf_location, 'rb') as pdf_file:
-            response = self.client.post(
-                reverse('presentation:upload'), 
-                {'title': test_filename_invalid_name,
-                'pdf_file': pdf_file}
-            )
-        
-        self.assertFormError(response, 'form', 'title', errors=['Title must contain only letters, numbers, spaces, and - _ . , ( )'])
+    def test_pdf_upload_invalid_title_variants(self):
+        ''' This part was scaled back to use a dictionary for clarity '''
+        invalid_titles = {
+            "invalid_chars": {
+                "title": "/root/directory@@@",
+                "error": "Title must contain only letters, numbers, spaces, and - _ . , ( )"
+            },
+            "too_short": {
+                "title": "small",
+                "error": "Ensure this value has at least 10 characters (it has 5)."
+            },
+            "too_long": {
+                "title": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas auctor libero et justo blandit.",
+                "error": "Ensure this value has at most 80 characters (it has 97)."
+            },
+            "empty": {
+                "title": "",
+                "error": "This field is required."
+            },
+            "only_spaces": {
+                "title": "               ",
+                "error": "This field is required."
+            }
+        }
 
-        with open(self.test_pdf_location, 'rb') as pdf_file:
-            response = self.client.post(
-                reverse('presentation:upload'), 
-                {'title': test_filename_too_small,
-                'pdf_file': pdf_file}
-            )
-            
-        self.assertFormError(response, 'form', 'title', errors=['Ensure this value has at least 10 characters (it has 5).'])
-
-        with open(self.test_pdf_location, 'rb') as pdf_file:
-            response = self.client.post(
-                reverse('presentation:upload'), 
-                {'title': test_filename_too_long,
-                'pdf_file': pdf_file}
-            )
-            
-        self.assertFormError(response, 'form', 'title', 'Ensure this value has at most 80 characters (it has 97).')
-
-        with open(self.test_pdf_location, 'rb') as pdf_file:
-            response = self.client.post(
-                reverse('presentation:upload'), 
-                {'title': test_filename_empty_name,
-                'pdf_file': pdf_file}
-            )
-            
-        self.assertFormError(response, 'form', 'title', 'This field is required.')
-
-        with open(self.test_pdf_location, 'rb') as pdf_file:
-            response = self.client.post(
-                reverse('presentation:upload'), 
-                {'title': test_filename_empty_strings,
-                'pdf_file': pdf_file}
-            )
-            
-        self.assertFormError(response, 'form', 'title', 'This field is required.')
+        for case_name, data in invalid_titles.items():
+            with self.subTest(case=case_name):
+                with open(self.test_pdf_location, 'rb') as pdf_file:
+                    response = self.client.post(
+                        reverse('presentation:upload'),
+                        {'title': data["title"], 'pdf_file': pdf_file}
+                    )
+                self.assertFormError(response, 'form', 'title', data["error"])
 
     def test_images_obtained_from_successful_pdf_upload(self):
         ''' Images folder test '''
