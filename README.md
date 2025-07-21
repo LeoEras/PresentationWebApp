@@ -22,37 +22,31 @@ To set up the development environment for this project, follow these steps:
     pip install -r requirements.txt
     ```
 
-4. **Configure the database:**
-This project works with Postgresql 17, so be sure to [download](https://www.postgresql.org/download/) the requiered files for a complete experience. You might also want to install [PgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) to have a GUI interface to the database.
-    Edit the database configs on presApp\settings.py file:
-    ```py
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            "OPTIONS": {
-                "service": "presentationApp",
-            },
-        }
-    }
+4. **Managing the database:**
+When you first run the project you might find some warnings about migrations. This means that the database was created but the tables might be missing. Just to be sure run:
+    ```sh
+    python manage.py makemigrations login presentation
+    python manage.py makemigrations presentation
+    python manage.py migrate
     ```
-    The **service** option should point to the first line present on the ".pg_service.conf" file, which should be visible to the terminal/cmd (this path should be set as an environment variable). The contents and location of the ".pg_service.conf" will vary between Windows and macOS/Linux, so refer to the [documentation](https://www.postgresql.org/docs/current/libpq-pgservice.html).
 
-    The contents of my *.pg_service.conf* file:
+5. **Running the project code:**
+This part is simple. Just run the following commands (make sure you do previous step first):
     ```sh
-    [presentationApp]
-    host=localhost
-    port=5432
-    user=postgres
-    dbname=presentationApp
+    python manage.py runserver
     ```
-    You might also need to configure the ".pgpass.conf" file. It follows a similar configuration as last file.
-    ```sh
-    localhost:5432:presentationApp:postgres:<my_secure_password>
-    ```
+
+You can now open the project on any browser.
 
 ## Testing (SQLite quick configuration)
-For testing purposes, just run the following lines (example with the login module and test cases):
+For testing purposes, just run the following line:
 ```
-python manage.py test login
+python manage.py test
 ```
-This will create a SQLite instance that sets up a test database for you. It will be destroyed as soon as the test finishes.
+If you somehow need to test a particular module, just type the module
+```
+python manage.py test [module]
+```
+Modules available so far are *login* and *presentation*.
+
+This will create a SQLite instance that sets up a test database for you. All test data (files/directories created) will be destroyed as soon as the test finishes.
