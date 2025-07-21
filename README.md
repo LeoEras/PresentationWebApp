@@ -50,3 +50,11 @@ python manage.py test [module]
 Modules available so far are *login* and *presentation*.
 
 This will create a SQLite instance that sets up a test database for you. All test data (files/directories created) will be destroyed as soon as the test finishes.
+
+## Report & Presentation
+- [Final Report](./report.pdf)
+- [Presentation Slides](./presentation.pdf)
+
+
+## References
+See the *References* section in the report.
